@@ -300,9 +300,11 @@ def dashboard():
     )
 
 
-# App initialization and startup
+# App initialization on startup (ensures DB and model are ready for both direct run and WSGI servers like Gunicorn)
+init_db()
+load_or_train_model()
+
 if __name__ == "__main__":
-    init_db()
-    load_or_train_model()
-    print("InternGuard Server running at http://127.0.0.1:5000")
-    app.run(debug=True, port=5000)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"InternGuard Server running at http://127.0.0.1:{port}")
+    app.run(debug=True, host="0.0.0.0", port=port)
