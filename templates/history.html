@@ -1,0 +1,71 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h2>📜 Report History</h2>
+            <p>Review previously scanned internship postings and manage risk assessment records.</p>
+        </div>
+        <div class="btn-group">
+            <a href="{{ url_for('home') }}" class="btn btn-secondary btn-sm">➕ New Scan</a>
+            {% if checks and checks|length > 0 %}
+                <form method="POST" action="{{ url_for('clear_history') }}" onsubmit="return confirm('Are you sure you want to clear your entire check history?');" style="display: inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">🗑️ Clear All History</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+    {% if checks and checks|length > 0 %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Posting Snippet</th>
+                        <th>Rule Score</th>
+                        <th>ML Prob</th>
+                        <th>Final Risk</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for check in checks %}
+                        {% set lvl = check.level %}
+                        {% set badge_class = 'badge-low' if lvl == 'Low Risk' else ('badge-moderate' if lvl == 'Moderate Risk' else ('badge-high' if lvl == 'High Risk' else 'badge-very-high')) %}
+                        <tr>
+                            <td style="white-space: nowrap; color: var(--text-muted); font-size: 0.85rem;">{{ check.time }}</td>
+                            <td>
+                                <div><strong>{{ check.snippet }}...</strong></div>
+                                {% if check.reasons %}
+                                    <div style="font-size: 0.8rem; color: #b91c1c; margin-top: 0.25rem;">
+                                        {{ check.reasons }}
+                                    </div>
+                                {% endif %}
+                            </td>
+                            <td><strong>{{ check.rule_score if check.rule_score is defined and check.rule_score is not none else check.score }}/100</strong></td>
+                            <td>{{ (check.ml_prob * 100)|round(1) if check.ml_prob is defined and check.ml_prob is not none else 'N/A' }}%</td>
+                            <td>
+                                <span class="badge {{ badge_class }}">{{ lvl }} ({{ check.score }}/100)</span>
+                            </td>
+                            <td>
+                                <form method="POST" action="{{ url_for('delete_check', check_id=check.id) }}" onsubmit="return confirm('Delete this record?');" style="display: inline;">
+                                    <button type="submit" class="btn btn-danger btn-sm" title="Delete record">🗑️ Delete</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div style="text-align: center; padding: 3rem 1rem; color: var(--text-muted);">
+            <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📋</div>
+            <h3>No checks found in your history</h3>
+            <p style="margin-top: 0.5rem; margin-bottom: 1.25rem;">Scan an internship posting on the Scanner page to see results recorded here.</p>
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Start Scanning Now</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

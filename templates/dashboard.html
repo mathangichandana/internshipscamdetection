@@ -1,0 +1,168 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="card-header" style="margin-bottom: 1.5rem;">
+    <h2>📊 Risk Analytics Dashboard</h2>
+    <p>Real-time statistics across analyzed internship postings, risk distribution, and machine learning model metrics.</p>
+</div>
+
+<!-- Stats Cards Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <div class="metric-title">Total Postings Scanned</div>
+        <div class="stat-number" style="color: var(--primary);">{{ total_checks }}</div>
+        <div class="metric-desc">Overall database records</div>
+    </div>
+    <div class="stat-card">
+        <div class="metric-title">Low Risk (Safe)</div>
+        <div class="stat-number" style="color: var(--low-risk);">{{ low_count }}</div>
+        <div class="metric-desc">{{ low_pct }}% of all checks</div>
+    </div>
+    <div class="stat-card">
+        <div class="metric-title">Moderate Risk</div>
+        <div class="stat-number" style="color: var(--mod-risk);">{{ mod_count }}</div>
+        <div class="metric-desc">{{ mod_pct }}% of all checks</div>
+    </div>
+    <div class="stat-card">
+        <div class="metric-title">High / Very High Risk</div>
+        <div class="stat-number" style="color: var(--vhigh-risk);">{{ high_count }}</div>
+        <div class="metric-desc">{{ high_pct }}% of all checks</div>
+    </div>
+</div>
+
+<!-- Risk Distribution Simple Bar Chart -->
+<div class="card">
+    <div class="section-title">
+        <span>📈</span> Risk Level Distribution
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Proportion of analyzed postings classified across risk severity tiers.
+    </p>
+
+    <div class="chart-container">
+        <div class="chart-bars">
+            <!-- Low Risk Bar -->
+            <div class="bar-col">
+                <span class="bar-value" style="color: var(--low-risk);">{{ low_count }}</span>
+                <div class="bar bar-low" style="height: {{ max(10, low_bar_height) }}%;"></div>
+                <span class="bar-label">Low Risk<br><small>(0-25)</small></span>
+            </div>
+
+            <!-- Moderate Risk Bar -->
+            <div class="bar-col">
+                <span class="bar-value" style="color: var(--mod-risk);">{{ mod_count }}</span>
+                <div class="bar bar-moderate" style="height: {{ max(10, mod_bar_height) }}%;"></div>
+                <span class="bar-label">Moderate<br><small>(26-50)</small></span>
+            </div>
+
+            <!-- High Risk Bar -->
+            <div class="bar-col">
+                <span class="bar-value" style="color: var(--high-risk);">{{ single_high_count }}</span>
+                <div class="bar bar-high" style="height: {{ max(10, single_high_bar_height) }}%;"></div>
+                <span class="bar-label">High Risk<br><small>(51-75)</small></span>
+            </div>
+
+            <!-- Very High Risk Bar -->
+            <div class="bar-col">
+                <span class="bar-value" style="color: var(--vhigh-risk);">{{ vhigh_count }}</span>
+                <div class="bar bar-very-high" style="height: {{ max(10, vhigh_bar_height) }}%;"></div>
+                <span class="bar-label">Very High<br><small>(76-100)</small></span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Machine Learning Evaluation Metrics -->
+<div class="card">
+    <div class="section-title">
+        <span>🤖</span> Machine Learning Model Performance
+    </div>
+    <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 1.25rem;">
+        Evaluated on test split of Indian internship postings dataset using TF-IDF feature extraction and Logistic Regression classifier.
+    </p>
+
+    <div class="metrics-grid">
+        <div class="metric-box">
+            <div class="metric-title">Accuracy</div>
+            <div class="metric-value" style="color: var(--primary);">{{ (metrics.accuracy * 100)|round(1) }}%</div>
+            <div class="metric-desc">Overall correct predictions</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-title">Precision</div>
+            <div class="metric-value" style="color: #0d9488;">{{ (metrics.precision * 100)|round(1) }}%</div>
+            <div class="metric-desc">Scam predictions that were truly scams</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-title">Recall</div>
+            <div class="metric-value" style="color: #6366f1;">{{ (metrics.recall * 100)|round(1) }}%</div>
+            <div class="metric-desc">Actual scams successfully caught</div>
+        </div>
+        <div class="metric-box">
+            <div class="metric-title">F1-Score</div>
+            <div class="metric-value" style="color: #8b5cf6;">{{ (metrics.f1 * 100)|round(1) }}%</div>
+            <div class="metric-desc">Harmonic mean of precision & recall</div>
+        </div>
+    </div>
+
+    <!-- Confusion Matrix Table -->
+    <div style="background: #f8fafc; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem; margin-top: 1rem;">
+        <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Confusion Matrix (Test Evaluation)</h4>
+        <div class="table-responsive">
+            <table class="table" style="max-width: 450px; margin: 0 auto; text-align: center;">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Predicted Legit</th>
+                        <th>Predicted Scam</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Actual Legit</strong></td>
+                        <td style="background: #dcfce7; font-weight: bold; color: #166534;">TN: {{ metrics.confusion_matrix[0][0] }}</td>
+                        <td style="background: #fee2e2; font-weight: bold; color: #991b1b;">FP: {{ metrics.confusion_matrix[0][1] }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Actual Scam</strong></td>
+                        <td style="background: #fee2e2; font-weight: bold; color: #991b1b;">FN: {{ metrics.confusion_matrix[1][0] }}</td>
+                        <td style="background: #dcfce7; font-weight: bold; color: #166534;">TP: {{ metrics.confusion_matrix[1][1] }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- How the System Works (Viva Assistance) -->
+<div class="card">
+    <div class="section-title">
+        <span>💡</span> How InternGuard Works (Hybrid Methodology)
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 0.75rem;">
+        <div style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;">
+            <strong>1. Rule Engine</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+                Regex patterns detect high-risk signals: registration fees, unrealistic stipend, 'no interview', 'guaranteed job', urgent phrasing.
+            </p>
+        </div>
+        <div style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;">
+            <strong>2. URL & Email Inspector</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+                Inspects links for missing HTTPS, direct IP hosts, abnormal URL length, and flags personal webmail domains (Gmail, Yahoo).
+            </p>
+        </div>
+        <div style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;">
+            <strong>3. Machine Learning</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+                TF-IDF converts textual n-grams into feature vectors, and Logistic Regression computes a probabilistic scam score.
+            </p>
+        </div>
+        <div style="padding: 1rem; border: 1px solid var(--border-color); border-radius: 8px; background: #fff;">
+            <strong>4. Risk Fusion</strong>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.35rem;">
+                Combines rules (50%) and ML probability (50%) into a unified 0-100 score, categorized into Low, Moderate, High, or Very High.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
